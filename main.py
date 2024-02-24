@@ -18,7 +18,7 @@
 #         (will need to be updated in your Spotify app and SPOTIPY_REDIRECT_URI variable)
 
 import os
-os.system('pip install pymongo[srv]')
+# os.system('pip install pymongo[srv]')
 # os.system('pip install uvicorn')
 # os.system('pip install spotipy')
 # os.system('pip install asgiref')
