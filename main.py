@@ -87,7 +87,6 @@ def main():
   if not session.get('uuid'):
     # Step 1. Visitor is unknown, give random ID
     session['uuid'] = str(uuid.uuid4())
-  print(session)
 
   cache_handler = spotipy.cache_handler.CacheFileHandler(
     cache_path=session_cache_path())
@@ -119,9 +118,11 @@ def main():
   print_token(p)
   # if user_id != None:
   #   update_token(p, user_id)
+  id_out = session.get('user_id')
   return f'<h2>Hi {spotify.me()["display_name"]}</h2>' \
          f'<p>You are now Connected with QuickStats</p>' \
-         f'<a href="https://quickstats.xyz/">Visit QuickStats Website to Sign up!</a>'
+         f'<a href="https://quickstats.xyz/">Visit QuickStats Website to Sign up!</a>' \
+         f'<p> Twitch ID: {id_out}<p>'
 
 @app.route('/currently_playing')
 def currently_playing():
