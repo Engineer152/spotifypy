@@ -83,7 +83,8 @@ def print_token(p):
 def main():
   try: user_id = request.args.get("user_id")
   except: user_id = None
-  session['user_id'] = user_id
+  if 'user_id' not in session:
+    session['user_id'] = user_id
   if not session.get('uuid'):
     # Step 1. Visitor is unknown, give random ID
     session['uuid'] = str(uuid.uuid4())
