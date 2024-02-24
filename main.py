@@ -75,8 +75,6 @@ def print_token(token_path):
 def update_token(token_path, user_id):
   with open (token_path, 'r') as f:
     out = json.load(f)
-    print(out)
-    print(type(out))
     user_id_edit(user_id, out)
     f.close()
   return
