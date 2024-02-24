@@ -78,7 +78,7 @@ def main():
     scope=
     'user-read-currently-playing playlist-modify-private playlist-modify-public playlist-read-private playlist-read-collaborative user-read-currently-playing user-read-playback-state user-read-playback-position user-read-recently-played user-top-read user-library-read user-follow-read',
     cache_handler=cache_handler,
-    show_dialog=True)
+    show_dialog=True, redirect_uri = "https://spotify.quickstats.xyz")
 
   if request.args.get("code"):
     # Step 3. Being redirected from Spotify auth page
