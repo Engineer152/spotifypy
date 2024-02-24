@@ -81,9 +81,12 @@ def print_token(p):
 
 @app.route('/')
 def main():
-  try: user_id = request.args.get("user_id")
-  except: user_id = None
-  session['user_id'] = user_id
+  try: session['user_id'] = request.args.get("user_id")
+  except: pass
+  if session.get('user_id'):
+    user_id = session.get('user_id')
+  else:
+    user_id = None
   if not session.get('uuid'):
     # Step 1. Visitor is unknown, give random ID
     session['uuid'] = str(uuid.uuid4())
