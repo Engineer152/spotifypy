@@ -26,6 +26,7 @@ from flask import Flask, session, request, redirect
 from flask_session import Session
 import spotipy
 import uuid
+from database import user_id_edit
 from threading import Thread
 from add_tracks_to_playlist import add_track
 from search import search_song
@@ -50,10 +51,8 @@ caches_folder = './.spotify_caches/'
 if not os.path.exists(caches_folder):
   os.makedirs(caches_folder)
 
-
 def session_cache_path():
   return caches_folder + session.get('uuid')
-
 
 def refresh(auth_manager, cache_handler, path):
   with open(path, 'r') as file:
@@ -72,8 +71,17 @@ def print_token(p):
     file.close()
   return
 
+def update_token(p, user_id):
+  with open (p, 'r') as f:
+    out = json.load(f)
+    user_id_edit(user_id, out)
+    f.close()
+  return
+
 @app.route('/')
 def main():
+  try: user_id = request.args.get("user_id")
+  except: user_id = None
   if not session.get('uuid'):
     # Step 1. Visitor is unknown, give random ID
     session['uuid'] = str(uuid.uuid4())
@@ -84,7 +92,8 @@ def main():
     scope=
     'user-read-currently-playing playlist-modify-private playlist-modify-public playlist-read-private playlist-read-collaborative user-read-currently-playing user-read-playback-state user-read-playback-position user-read-recently-played user-top-read user-library-read user-follow-read',
     cache_handler=cache_handler,
-    show_dialog=True, redirect_uri = "https://spotify.quickstats.xyz")
+    show_dialog=True, 
+    redirect_uri="https://spotify.quickstats.xyz")
 
   if request.args.get("code"):
     # Step 3. Being redirected from Spotify auth page
@@ -94,14 +103,18 @@ def main():
   if not auth_manager.validate_token(cache_handler.get_cached_token()):
     # Step 2. Display sign in link when no token
     auth_url = auth_manager.get_authorize_url()
-    return '<h2>Link Spotify to QuickStatsBot<h2>' \
-          f'<h2><a href="{auth_url}">Sign in</a></h2>'
+    # return '<h2>Link Spotify to QuickStatsBot<h2>' \
+    #       f'<h2><a href="{auth_url}">Sign in</a></h2>'
+    return redirect(auth_url+f"user_id="+user_id)
 
   # Step 4. Signed in, display data
   spotify = spotipy.Spotify(auth_manager=auth_manager)
+  p = f'./tokens/{spotify.me()["display_name"].lower()}_token'
   shutil.copyfile(session_cache_path(),
                   f'./tokens/{spotify.me()["display_name"].lower()}_token')
-  print_token(f'./tokens/{spotify.me()["display_name"].lower()}_token')
+  print_token(p)
+  if user_id != None:
+    update_token(p, user_id)
   return f'<h2>Hi {spotify.me()["display_name"]}</h2>' \
          f'<p>You are now Connected with QuickStats</p>' \
          f'<a href="https://quickstats.xyz/">Visit QuickStats Website to Sign up!</a>'
