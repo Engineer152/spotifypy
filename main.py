@@ -81,12 +81,13 @@ def print_token(p):
 
 @app.route('/')
 def main():
-  print(session)
-  if 'user_id' not in session:
-    session['uuid'] = request.args.get("user_id")
+  try: user_id = request.args.get("user_id")
+  except: user_id = None
+  session['user_id'] = user_id
   if not session.get('uuid'):
     # Step 1. Visitor is unknown, give random ID
     session['uuid'] = str(uuid.uuid4())
+  print(session)
 
   cache_handler = spotipy.cache_handler.CacheFileHandler(
     cache_path=session_cache_path())
@@ -94,15 +95,13 @@ def main():
     scope=
     'user-read-currently-playing playlist-modify-private playlist-modify-public playlist-read-private playlist-read-collaborative user-read-currently-playing user-read-playback-state user-read-playback-position user-read-recently-played user-top-read user-library-read user-follow-read',
     cache_handler=cache_handler,
-    show_dialog=True)
+    show_dialog=True, 
+    redirect_uri="https://spotify.quickstats.xyz")
 
   if request.args.get("code"):
     # Step 3. Being redirected from Spotify auth page
     auth_manager.get_access_token(request.args.get("code"))
-    if 'user_id' in session:
-      return redirect('/'+'&user_id'+session['uuid'])
-    else:
-      return redirect('/')
+    return redirect('/')
 
   if not auth_manager.validate_token(cache_handler.get_cached_token()):
     # Step 2. Display sign in link when no token
@@ -120,8 +119,6 @@ def main():
   print_token(p)
   # if user_id != None:
   #   update_token(p, user_id)
-  if session['user_id']:
-    print(session["user_id"])
   return f'<h2>Hi {spotify.me()["display_name"]}</h2>' \
          f'<p>You are now Connected with QuickStats</p>' \
          f'<a href="https://quickstats.xyz/">Visit QuickStats Website to Sign up!</a>'
