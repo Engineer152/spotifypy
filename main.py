@@ -65,15 +65,9 @@ def refresh(auth_manager, cache_handler, path):
         file.close()
   return auth_manager
 
-def print_token(token_path):
-  with open (token_path, 'r') as file:
-    print('LOGIN TOKEN: '+ token_path)
-    print(file.read())
-    file.close()
-  return
-
 def update_token(token_path, user_id):
   with open (token_path, 'r') as f:
+    print('LOGIN TOKEN: '+ token_path)
     out = json.load(f)
     user_id_edit(user_id, out)
     f.close()
@@ -112,7 +106,6 @@ def main():
   spotify = spotipy.Spotify(auth_manager=auth_manager)
   token_path = f'./tokens/{spotify.me()["display_name"].lower()}_token'
   shutil.copyfile(session_cache_path(),token_path)
-  print_token(token_path)
   if session.get("user_id"):
     update_token(token_path, session.get("user_id"))
   return redirect("https://id.twitch.tv/oauth2/authorize?response_type=code&client_id=8avl1worc89wc3rv0q840vo63ndzoa&redirect_uri=https://quickstats.xyz/auth&scope=user:read:follows%20user:read:subscriptions%20user:read:broadcast%20user:read:email%20clips:edit%20channel:read:subscriptions%20moderation:read%20channel:manage:redemptions%20channel:read:redemptions%20channel:manage:broadcast%20moderator:read:followers%20channel:manage:moderators%20moderator:read:chatters%20channel:read:vips%20moderator:manage:announcements%20moderator:manage:shoutouts%20moderator:read:shoutouts%20user:read:blocked_users%20user:manage:blocked_users")
