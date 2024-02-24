@@ -83,6 +83,7 @@ def print_token(p):
 def main():
   try: user_id = request.args.get("user_id")
   except: user_id = None
+  session['user_id'] = user_id
   if not session.get('uuid'):
     # Step 1. Visitor is unknown, give random ID
     session['uuid'] = str(uuid.uuid4())
@@ -99,7 +100,10 @@ def main():
   if request.args.get("code"):
     # Step 3. Being redirected from Spotify auth page
     auth_manager.get_access_token(request.args.get("code"))
-    return redirect('/')
+    if user_id!=None:
+      return redirect('/'+'&user_id'+user_id)
+    else:
+      return redirect('/')
 
   if not auth_manager.validate_token(cache_handler.get_cached_token()):
     # Step 2. Display sign in link when no token
@@ -119,7 +123,8 @@ def main():
   #   update_token(p, user_id)
   return f'<h2>Hi {spotify.me()["display_name"]}</h2>' \
          f'<p>You are now Connected with QuickStats</p>' \
-         f'<a href="https://quickstats.xyz/">Visit QuickStats Website to Sign up!</a>'
+         f'<a href="https://quickstats.xyz/">Visit QuickStats Website to Sign up!</a>' \
+         f'<p>Twitch ID: {user_id}</p>'
 
 @app.route('/currently_playing')
 def currently_playing():
