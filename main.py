@@ -65,28 +65,29 @@ def refresh(auth_manager, cache_handler, path):
         file.close()
   return auth_manager
 
-def print_token(p):
-  with open (p, 'r') as file:
-    print('LOGIN TOKEN: '+p)
+def print_token(token_path):
+  with open (token_path, 'r') as file:
+    print('LOGIN TOKEN: '+ token_path)
     print(file.read())
     file.close()
   return
 
-# def update_token(p, user_id):
-#   with open (p, 'r') as f:
-#     out = json.load(f)
-#     user_id_edit(user_id, out)
-#     f.close()
-#   return
+def update_token(token_path, user_id):
+  with open (token_path, 'r') as f:
+    out = json.load(f)
+    user_id_edit(user_id, out)
+    f.close()
+  return
 
 @app.route('/')
 def main():
+  # Step 1. Assign user_id to session object
   try: user_id = request.args.get("user_id")
   except: user_id = None
   if 'user_id' not in session:
     session['user_id'] = user_id
   if not session.get('uuid'):
-    # Step 1. Visitor is unknown, give random ID
+    # Step 2. Visitor is unknown, give random ID
     session['uuid'] = str(uuid.uuid4())
 
   cache_handler = spotipy.cache_handler.CacheFileHandler(
@@ -95,8 +96,7 @@ def main():
     scope=
     'user-read-currently-playing playlist-modify-private playlist-modify-public playlist-read-private playlist-read-collaborative user-read-currently-playing user-read-playback-state user-read-playback-position user-read-recently-played user-top-read user-library-read user-follow-read',
     cache_handler=cache_handler,
-    show_dialog=True, 
-    redirect_uri="https://spotify.quickstats.xyz")
+    show_dialog=True)
 
   if request.args.get("code"):
     # Step 3. Being redirected from Spotify auth page
@@ -104,26 +104,22 @@ def main():
     return redirect('/')
 
   if not auth_manager.validate_token(cache_handler.get_cached_token()):
-    # Step 2. Display sign in link when no token
+    # Step 4. Display sign in link when no token
     auth_url = auth_manager.get_authorize_url()
-    # return '<h2>Link Spotify to QuickStatsBot<h2>' \
-    #       f'<h2><a href="{auth_url}">Sign in</a></h2>'
     return redirect(auth_url)
-    # return redirect(auth_url+f"&user_id="+user_id)
 
-  # Step 4. Signed in, display data
+  # Step 5. Signed in, display data
   spotify = spotipy.Spotify(auth_manager=auth_manager)
-  p = f'./tokens/{spotify.me()["display_name"].lower()}_token'
-  shutil.copyfile(session_cache_path(),
-                  f'./tokens/{spotify.me()["display_name"].lower()}_token')
-  print_token(p)
-  # if user_id != None:
-  #   update_token(p, user_id)
-  id_out = session.get('user_id')
-  return f'<h2>Hi {spotify.me()["display_name"]}</h2>' \
-         f'<p>You are now Connected with QuickStats</p>' \
-         f'<a href="https://quickstats.xyz/">Visit QuickStats Website to Sign up!</a>' \
-         f'<p> Twitch ID: {id_out}<p>'
+  token_path = f'./tokens/{spotify.me()["display_name"].lower()}_token'
+  shutil.copyfile(session_cache_path(),token_path)
+  print_token(token_path)
+  if session.get("user_id"):
+    update_token(token_path, session.get("user_id"))
+  return redirect("https://id.twitch.tv/oauth2/authorize?response_type=code&client_id=8avl1worc89wc3rv0q840vo63ndzoa&redirect_uri=https://quickstats.xyz/auth&scope=user:read:follows%20user:read:subscriptions%20user:read:broadcast%20user:read:email%20clips:edit%20channel:read:subscriptions%20moderation:read%20channel:manage:redemptions%20channel:read:redemptions%20channel:manage:broadcast%20moderator:read:followers%20channel:manage:moderators%20moderator:read:chatters%20channel:read:vips%20moderator:manage:announcements%20moderator:manage:shoutouts%20moderator:read:shoutouts%20user:read:blocked_users%20user:manage:blocked_users")
+  # return f'<h2>Hi {spotify.me()["display_name"]}</h2>' \
+  #        f'<p>You are now Connected with QuickStats</p>' \
+  #        f'<a href="https://quickstats.xyz/">Visit QuickStats Website to Sign up!</a>' \
+  #        f'<p> Twitch ID: {id_out}<p>'
 
 @app.route('/currently_playing')
 def currently_playing():
