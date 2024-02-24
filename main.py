@@ -67,17 +67,17 @@ def refresh(auth_manager, cache_handler, path):
 
 def print_token(p):
   with open (p, 'r') as file:
-    print('LOGIN TOKEN')
+    print('LOGIN TOKEN: '+p)
     print(file.read())
     file.close()
   return
 
-def update_token(p, user_id):
-  with open (p, 'r') as f:
-    out = json.load(f)
-    user_id_edit(user_id, out)
-    f.close()
-  return
+# def update_token(p, user_id):
+#   with open (p, 'r') as f:
+#     out = json.load(f)
+#     user_id_edit(user_id, out)
+#     f.close()
+#   return
 
 @app.route('/')
 def main():
@@ -106,7 +106,8 @@ def main():
     auth_url = auth_manager.get_authorize_url()
     # return '<h2>Link Spotify to QuickStatsBot<h2>' \
     #       f'<h2><a href="{auth_url}">Sign in</a></h2>'
-    return redirect(auth_url+f"user_id="+user_id)
+    return redirect(auth_url)
+    # return redirect(auth_url+f"&user_id="+user_id)
 
   # Step 4. Signed in, display data
   spotify = spotipy.Spotify(auth_manager=auth_manager)
@@ -114,8 +115,8 @@ def main():
   shutil.copyfile(session_cache_path(),
                   f'./tokens/{spotify.me()["display_name"].lower()}_token')
   print_token(p)
-  if user_id != None:
-    update_token(p, user_id)
+  # if user_id != None:
+  #   update_token(p, user_id)
   return f'<h2>Hi {spotify.me()["display_name"]}</h2>' \
          f'<p>You are now Connected with QuickStats</p>' \
          f'<a href="https://quickstats.xyz/">Visit QuickStats Website to Sign up!</a>'
