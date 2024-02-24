@@ -172,7 +172,7 @@ Following lines allow application to be run more conveniently with
 '''
 
 app = WsgiToAsgi(app)
-# uvicorn.run(app, host="0.0.0.0", port=5000, log_level="info")
+uvicorn.run(app, host="0.0.0.0", port=5000, log_level="info")
 
 # def run():
 #     app.run(host="0.0.0.0", port=8888)
