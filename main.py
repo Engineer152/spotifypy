@@ -18,6 +18,7 @@
 #         (will need to be updated in your Spotify app and SPOTIPY_REDIRECT_URI variable)
 
 import os
+os.system('pip install --upgrade pip')
 os.system('pip install pymongo[srv]')
 # os.system('pip install uvicorn')
 # os.system('pip install spotipy')
@@ -75,7 +76,9 @@ def print_token(token_path):
 def update_token(token_path, user_id):
   with open (token_path, 'r') as f:
     out = json.load(f)
-    user_id_edit(user_id, out)
+    print(out)
+    print(type(out))
+    # user_id_edit(user_id, out)
     f.close()
   return
 
