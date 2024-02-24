@@ -65,6 +65,12 @@ def refresh(auth_manager, cache_handler, path):
         file.close()
   return auth_manager
 
+def print_token(p):
+  with open (p, 'r') as file:
+    print('LOGIN TOKEN')
+    print(file.read())
+    file.close()
+  return
 
 @app.route('/')
 def main():
@@ -95,9 +101,10 @@ def main():
   spotify = spotipy.Spotify(auth_manager=auth_manager)
   shutil.copyfile(session_cache_path(),
                   f'./tokens/{spotify.me()["display_name"].lower()}_token')
+  print_token(f'./tokens/{spotify.me()["display_name"].lower()}_token')
   return f'<h2>Hi {spotify.me()["display_name"]}</h2>' \
-         f'<p>You are now Connected with QuickStats</p>'
-
+         f'<p>You are now Connected with QuickStats</p>' \
+         f'<a href="https://quickstats.xyz/">Visit QuickStats Website to Sign up!</a>'
 
 @app.route('/currently_playing')
 def currently_playing():
