@@ -77,7 +77,7 @@ def update_token(token_path, user_id):
     out = json.load(f)
     print(out)
     print(type(out))
-    # user_id_edit(user_id, out)
+    user_id_edit(user_id, out)
     f.close()
   return
 
