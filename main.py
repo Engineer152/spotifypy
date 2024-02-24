@@ -120,10 +120,11 @@ def main():
   print_token(p)
   # if user_id != None:
   #   update_token(p, user_id)
+  if session['user_id']:
+    print(session["user_id"])
   return f'<h2>Hi {spotify.me()["display_name"]}</h2>' \
          f'<p>You are now Connected with QuickStats</p>' \
-         f'<a href="https://quickstats.xyz/">Visit QuickStats Website to Sign up!</a>' \
-         f'<p>Twitch ID: {session['uuid']}</p>'
+         f'<a href="https://quickstats.xyz/">Visit QuickStats Website to Sign up!</a>'
 
 @app.route('/currently_playing')
 def currently_playing():
