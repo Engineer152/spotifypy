@@ -81,12 +81,9 @@ def print_token(p):
 
 @app.route('/')
 def main():
-  try: session['user_id'] = request.args.get("user_id")
-  except: pass
-  if session.get('user_id'):
-    user_id = session.get('user_id')
-  else:
-    user_id = None
+  print(session)
+  if 'user_id' not in session:
+    session['uuid'] = request.args.get("user_id")
   if not session.get('uuid'):
     # Step 1. Visitor is unknown, give random ID
     session['uuid'] = str(uuid.uuid4())
@@ -97,14 +94,13 @@ def main():
     scope=
     'user-read-currently-playing playlist-modify-private playlist-modify-public playlist-read-private playlist-read-collaborative user-read-currently-playing user-read-playback-state user-read-playback-position user-read-recently-played user-top-read user-library-read user-follow-read',
     cache_handler=cache_handler,
-    show_dialog=True, 
-    redirect_uri="https://spotify.quickstats.xyz")
+    show_dialog=True)
 
   if request.args.get("code"):
     # Step 3. Being redirected from Spotify auth page
     auth_manager.get_access_token(request.args.get("code"))
-    if user_id!=None:
-      return redirect('/'+'&user_id'+user_id)
+    if 'user_id' in session:
+      return redirect('/'+'&user_id'+session['uuid'])
     else:
       return redirect('/')
 
@@ -127,7 +123,7 @@ def main():
   return f'<h2>Hi {spotify.me()["display_name"]}</h2>' \
          f'<p>You are now Connected with QuickStats</p>' \
          f'<a href="https://quickstats.xyz/">Visit QuickStats Website to Sign up!</a>' \
-         f'<p>Twitch ID: {user_id}</p>'
+         f'<p>Twitch ID: {session['uuid']}</p>'
 
 @app.route('/currently_playing')
 def currently_playing():
