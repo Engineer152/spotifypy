@@ -16,7 +16,7 @@ def user_id_find(user_id):
 
 def user_id_edit(user_id,indata):
     collection=client.Users.Streamers
-    userdata=collection.find_one({"user_id":user_id})
+    userdata=collection.find_one({"user_id":int(user_id)})
     try: test=userdata['spotify_token']
     except: userdata['spotify_token']={}
     userdata['spotify_token']=indata
