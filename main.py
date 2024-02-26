@@ -57,7 +57,7 @@ def update_token(token_path, user_id):
 def get_temp_token(userdata):
   # userdata = user_find(user_name)
   if userdata!=None and ("spotify_token" in userdata):
-    temp_path = f'./tokens/{userdata['user_name'].lower()}_token'
+    temp_path = f'./tokens/{userdata["user_name"].lower()}_token'
     with open (temp_path, 'w') as f:
       f.write(str(userdata['spotify_token']))
       f.close()
