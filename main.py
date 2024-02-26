@@ -64,7 +64,7 @@ def get_temp_token(userdata):
     return temp_path
   return None
 
-def file_exists(path,userdata):
+def check_file(path,userdata):
   if exists(path):
     return True
   elif "spotify_token" in userdata:
@@ -119,7 +119,7 @@ def currently_playing():
   userdata = user_find(user)
   if user != None:
     path = f'./tokens/{user}_token'
-    file_exists = file_exists(path,userdata)
+    file_exists = check_file(path,userdata)
     if file_exists:
       cache_handler = spotipy.cache_handler.CacheFileHandler(cache_path=path)
       auth_manager = spotipy.oauth2.SpotifyOAuth(cache_handler=cache_handler)
@@ -142,7 +142,7 @@ def recently_played():
   userdata = user_find(user)
   if user != None:
     path = f'./tokens/{user}_token'
-    file_exists = file_exists(path,userdata)
+    file_exists = check_file(path,userdata)
     if file_exists:
       cache_handler = spotipy.cache_handler.CacheFileHandler(cache_path=path)
       auth_manager = spotipy.oauth2.SpotifyOAuth(cache_handler=cache_handler)
