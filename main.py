@@ -1,22 +1,3 @@
-# Prerequisites
-#     pip3 install spotipy Flask Flask-Session
-#     // from your [app settings](https://developer.spotify.com/dashboard/applications)
-#     export SPOTIPY_CLIENT_ID=client_id_here
-#     export SPOTIPY_CLIENT_SECRET=client_secret_here
-#     export SPOTIPY_REDIRECT_URI='http://127.0.0.1:8080' // must contain a port
-#     // SPOTIPY_REDIRECT_URI must be added to your [app settings](https://developer.spotify.com/dashboard/applications)
-#     OPTIONAL
-#     // in development environment for debug output
-#     export FLASK_ENV=development
-#     // so that you can invoke the app outside of the file's directory include
-#     export FLASK_APP=/path/to/spotipy/examples/app.py
-
-#     // on Windows, use `SET` instead of `export`
-# Run app.py
-#     python3 app.py OR python3 -m flask run
-#     NOTE: If receiving "port already in use" error, try other ports: 5000, 8090, 8888, etc...
-#         (will need to be updated in your Spotify app and SPOTIPY_REDIRECT_URI variable)
-
 import os
 # os.system('pip install pymongo[srv]')
 # os.system('pip install uvicorn')
@@ -27,7 +8,7 @@ from flask import Flask, session, request, redirect
 from flask_session import Session
 import spotipy
 import uuid
-from database import user_id_edit
+from database import user_id_edit, user_find
 from threading import Thread
 from add_tracks_to_playlist import add_track
 from search import search_song
@@ -67,11 +48,31 @@ def refresh(auth_manager, cache_handler, path):
 
 def update_token(token_path, user_id):
   with open (token_path, 'r') as f:
-    print('LOGIN TOKEN: '+ token_path)
+    # print('LOGIN TOKEN: '+ token_path)
     out = json.load(f)
     user_id_edit(user_id, out)
     f.close()
   return
+
+def get_temp_token(userdata):
+  # userdata = user_find(user_name)
+  if userdata!=None and ("spotify_token" in userdata):
+    temp_path = f'./tokens/{userdata['user_name'].lower()}_token'
+    with open (temp_path, 'w') as f:
+      f.write(str(userdata['spotify_token']))
+      f.close()
+    return temp_path
+  return None
+
+def file_exists(path,userdata):
+  if exists(path):
+    return True
+  elif "spotify_token" in userdata:
+    out = get_temp_token(userdata)
+    if out!=None: return True
+    else: return False
+  else:
+    return False
 
 @app.route('/')
 def main():
@@ -106,27 +107,26 @@ def main():
   spotify = spotipy.Spotify(auth_manager=auth_manager)
   token_path = f'./tokens/{spotify.me()["display_name"].lower()}_token'
   shutil.copyfile(session_cache_path(),token_path)
+  # Step 6. Update user token in database
   if session.get("user_id"):
     update_token(token_path, session.get("user_id"))
+  # Redirect to QuickStats Website
   return redirect("https://id.twitch.tv/oauth2/authorize?response_type=code&client_id=8avl1worc89wc3rv0q840vo63ndzoa&redirect_uri=https://quickstats.xyz/auth&scope=user:read:follows%20user:read:subscriptions%20user:read:broadcast%20user:read:email%20clips:edit%20channel:read:subscriptions%20moderation:read%20channel:manage:redemptions%20channel:read:redemptions%20channel:manage:broadcast%20moderator:read:followers%20channel:manage:moderators%20moderator:read:chatters%20channel:read:vips%20moderator:manage:announcements%20moderator:manage:shoutouts%20moderator:read:shoutouts%20user:read:blocked_users%20user:manage:blocked_users")
-  # return f'<h2>Hi {spotify.me()["display_name"]}</h2>' \
-  #        f'<p>You are now Connected with QuickStats</p>' \
-  #        f'<a href="https://quickstats.xyz/">Visit QuickStats Website to Sign up!</a>' \
-  #        f'<p> Twitch ID: {id_out}<p>'
 
 @app.route('/currently_playing')
 def currently_playing():
   user = request.args.get("user_name")
+  userdata = user_find(user)
   if user != None:
     path = f'./tokens/{user}_token'
-    file_exists = exists(path)
+    file_exists = file_exists(path,userdata)
     if file_exists:
       cache_handler = spotipy.cache_handler.CacheFileHandler(cache_path=path)
       auth_manager = spotipy.oauth2.SpotifyOAuth(cache_handler=cache_handler)
       if not auth_manager.validate_token(cache_handler.get_cached_token()):
         auth_manager = refresh(auth_manager, cache_handler, path)
+        update_token(path,userdata['user_id'])
       spotify = spotipy.Spotify(auth_manager=auth_manager)
-      # track = spotify.current_user_playing_track()
       track = spotify.currently_playing()
       print(track)
       if not track is None:
@@ -139,14 +139,16 @@ def currently_playing():
 @app.route('/recently_played')
 def recently_played():
   user = request.args.get("user_name")
+  userdata = user_find(user)
   if user != None:
     path = f'./tokens/{user}_token'
-    file_exists = exists(path)
+    file_exists = file_exists(path,userdata)
     if file_exists:
       cache_handler = spotipy.cache_handler.CacheFileHandler(cache_path=path)
       auth_manager = spotipy.oauth2.SpotifyOAuth(cache_handler=cache_handler)
       if not auth_manager.validate_token(cache_handler.get_cached_token()):
         auth_manager = refresh(auth_manager, cache_handler, path)
+        update_token(path,userdata['user_id'])
       spotify = spotipy.Spotify(auth_manager=auth_manager)
       tracks = spotify.current_user_recently_played(limit=50)
       if not tracks is None:
@@ -164,64 +166,3 @@ Following lines allow application to be run more conveniently with
 
 app = WsgiToAsgi(app)
 # uvicorn.run(app, host="0.0.0.0", port=5000, log_level="info")
-
-# def run():
-#     app.run(host="0.0.0.0", port=8888)
-
-# def keep_alive():
-#     server = Thread(target=run)
-#     server.start()
-
-# @app.route('/sign_out')
-# def sign_out():
-#     try:
-#         # Remove the CACHE file (.cache-test) so that a new user can authorize.
-#         os.remove(session_cache_path())
-#         session.clear()
-#     except OSError as e:
-#         print ("Error: %s - %s." % (e.filename, e.strerror))
-#     return redirect('/')
-
-# @app.route('/playlists')
-# def playlists():
-#     #path='./.spotify_caches/eca9ee78-0dbb-48e8-bec1-25b169667d43'
-#     cache_handler = spotipy.cache_handler.CacheFileHandler(cache_path=path)
-#     auth_manager = spotipy.oauth2.SpotifyOAuth(cache_handler=cache_handler)
-#     if not auth_manager.validate_token(cache_handler.get_cached_token()):
-#       auth_manager=refresh(auth_manager,cache_handler)
-#     spotify = spotipy.Spotify(auth_manager=auth_manager)
-#     return spotify.current_user_playlists()
-
-# @app.route('/devices')
-# def devices():
-#     #path='./.spotify_caches/eca9ee78-0dbb-48e8-bec1-25b169667d43'
-#     cache_handler = spotipy.cache_handler.CacheFileHandler(cache_path=path)
-#     auth_manager = spotipy.oauth2.SpotifyOAuth(cache_handler=cache_handler)
-#     if not auth_manager.validate_token(cache_handler.get_cached_token()):
-#       auth_manager=refresh(auth_manager,cache_handler)
-#     spotify = spotipy.Spotify(auth_manager=auth_manager)
-#     return spotify.devices()
-
-# @app.route('/current_user')
-# def current_user():
-#     cache_handler = spotipy.cache_handler.CacheFileHandler(cache_path=path)
-#     auth_manager = spotipy.oauth2.SpotifyOAuth(cache_handler=cache_handler)
-#     if not auth_manager.validate_token(cache_handler.get_cached_token()):
-#       auth_manager=refresh(auth_manager,cache_handler)
-#     spotify = spotipy.Spotify(auth_manager=auth_manager)
-#     return spotify.current_user()
-
-# @app.route('/song_request', methods=['GET','POST'])
-# def song_request():
-#   #<Reformed playlistid='565fUMPIj7mf9XiiCttslu'
-#   playlistid='6oOBqSitVLXTFmYbCyXLwj'
-#   message=request.data.decode("utf-8")
-#   print(str(message))
-#   trackid=search_song(message)
-#   add_track(playlistid,trackid)
-#   out=message+' has been added to playlist.'
-#   print(out)
-#   return out
-
-# def keep_alive():
-#     app.run(threaded=True, port=int(os.environ.get("PORT", os.environ.get("SPOTIPY_REDIRECT_URI", 8080).split(":")[-1])))

@@ -10,3 +10,8 @@ def user_id_edit(user_id,indata):
     userdata['spotify_token']=indata
     collection.replace_one({"user_id": int(user_id)},userdata)
     return
+
+def user_find(user_name):
+    collection=client.Users.Streamers
+    userdata=collection.find_one({"user_name":user_name.lower()})
+    return userdata
